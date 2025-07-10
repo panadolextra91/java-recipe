@@ -1,0 +1,114 @@
+Backend Development Plan for java-recipe
+This document outlines the high-level plan for developing the backend of the java-recipe web application. It serves as a guide for development and context for AI assistance.
+
+1. Project Overview
+Project Name: java-recipe
+
+Purpose: An online platform for sharing recipes, allowing users to upload, view, comment on, like, favorite, and review recipes. It will also include a notification system and basic admin functionalities.
+
+Monorepo Structure: The backend (this project) is part of a monorepo (panadolextra91-java-recipe/backend).
+
+2. System Architecture
+Choice: Modular Monolith
+
+Reasoning: Chosen to simplify initial development, reduce complexity compared to microservices, ensure faster iterations, and provide a clear path for future scaling by maintaining strong internal modularity.
+
+3. Technology Stack
+Core Framework: Spring Boot (Java)
+
+Build Tool: Gradle
+
+ORM: Hibernate (as the JPA provider) with Spring Data JPA
+
+Database: MySQL
+
+Security: Spring Security (for authentication and authorization, likely using JWT for API security).
+
+External Services (Planned): Cloudinary for image storage, an email service for password resets.
+
+4. Key Backend Features to Implement
+The backend will expose RESTful APIs to support the following functionalities:
+
+4.1. User Management
+User Registration and Login
+
+User Profile Management (including display_name, bio, avatar_url)
+
+Password Hashing (BCrypt)
+
+User Roles (USER, ADMIN) for authorization
+
+Forgot Password / Password Reset (via email)
+
+4.2. Recipe Management
+CRUD (Create, Read, Update, Delete) operations for recipes.
+
+Recipe fields: title, description, prep_time_minutes, cook_time_minutes, servings, is_published.
+
+Association with RecipeImages (multiple images per recipe).
+
+Association with Ingredients (list of ingredients).
+
+Association with Instructions (step-by-step guide).
+
+Association with Categories (multiple categories per recipe).
+
+Association with ConsumerWarnings (multiple warnings per recipe).
+
+View Count: Track view_count for each recipe to enable "famous recipe" leaderboard.
+
+4.3. User Interactions
+Comments: Users can post comments on recipes.
+
+Replies: Users can reply to comments.
+
+Likes: Users can like recipes, comments, and replies.
+
+Favorites: Users can mark recipes as favorites.
+
+Reviews & Star Ratings: Users can submit reviews with a rating (1-5 stars) and an optional text comment for recipes. The recipes table will store aggregated average_rating and review_count.
+
+4.4. Notifications
+System notifications for users (e.g., "someone liked your recipe," "new comment on your recipe," "someone replied to your comment").
+
+Notification types and associated entities/messages.
+
+Marking notifications as read.
+
+4.5. Admin System
+Basic user and content moderation capabilities for ADMIN role users.
+
+Ability to manage categories and consumer warnings.
+
+4.6. Search Functionality
+Search recipes by title, ingredients, categories, warnings.
+
+"Recipes I Can Make" Feature: A one-time search where users input ingredients (not stored persistently) and the system finds matching recipes.
+
+5. Database Schema Strategy
+Approach: Code-First with JPA/Hibernate.
+
+Process:
+
+Define Java classes (@Entity) in com.javarecipe.backend.<module_name> packages (e.g., com.javarecipe.backend.user.User).
+
+Use JPA annotations (@Table, @Column, @Id, @GeneratedValue, @OneToMany, @ManyToOne, etc.) to map entities to MySQL tables and define relationships.
+
+Configure spring.jpa.hibernate.ddl-auto=update in application.properties during development to automatically create/update the MySQL schema.
+
+MySQL Workbench will be used for viewing the generated schema and managing data, not for direct schema definition.
+
+6. Development Workflow / Cursor AI Focus
+Modular Design: When generating code, follow the established modular structure (e.g., user, recipe, comment, interaction, notification packages).
+
+JPA Entities: Focus on correctly defining all entities with appropriate fields, data types, constraints (nullable, unique, length), and relationships using JPA annotations.
+
+Repositories: Generate Spring Data JPA repositories for each entity.
+
+Services: Implement business logic within dedicated service classes that interact with repositories.
+
+Controllers: Create RESTful controllers that expose APIs for all defined features.
+
+Database Interactions: Ensure that database operations (CRUD, incrementing counters, transactional updates for aggregate fields like average_rating) are handled correctly and efficiently.
+
+This plan provides a clear roadmap for the backend development, leveraging Java Spring Boot and Hibernate within the modular monolith architecture.
