@@ -2,6 +2,7 @@ package com.javarecipe.backend.user.service;
 
 import com.javarecipe.backend.common.service.EmailService;
 import com.javarecipe.backend.user.dto.PasswordChangeDTO;
+import com.javarecipe.backend.user.dto.PasswordChangeRequest;
 import com.javarecipe.backend.user.dto.PasswordResetDTO;
 import com.javarecipe.backend.user.dto.UserDTO;
 import com.javarecipe.backend.user.dto.UserProfileDTO;
@@ -93,22 +94,47 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public boolean changePassword(Long userId, PasswordChangeDTO passwordChangeDTO) {
         User user = getUserById(userId);
-        
+
         // Verify current password
         if (!passwordEncoder.matches(passwordChangeDTO.getCurrentPassword(), user.getPassword())) {
             return false;
         }
-        
+
         // Verify that new password and confirmation match
         if (!passwordChangeDTO.getNewPassword().equals(passwordChangeDTO.getConfirmPassword())) {
             return false;
         }
-        
+
         // Update password
         user.setPassword(passwordEncoder.encode(passwordChangeDTO.getNewPassword()));
         userRepository.save(user);
-        
+
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean changePasswordSimple(Long userId, PasswordChangeRequest passwordChangeRequest) {
+        User user = getUserById(userId);
+
+        // Verify current password
+        if (!passwordEncoder.matches(passwordChangeRequest.getCurrentPassword(), user.getPassword())) {
+            return false;
+        }
+
+        // Update password (no constraints, no confirmation required)
+        user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
+        userRepository.save(user);
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public User updateAvatarUrl(Long userId, String avatarUrl) {
+        User user = getUserById(userId);
+        user.setAvatarUrl(avatarUrl);
+        return userRepository.save(user);
     }
 
     @Override

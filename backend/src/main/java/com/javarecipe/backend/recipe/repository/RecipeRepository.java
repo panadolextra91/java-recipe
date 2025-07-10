@@ -36,7 +36,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                   "JOIN recipe_categories rc ON r.id = rc.recipe_id " +
                   "JOIN categories c ON rc.category_id = c.id " +
                   "WHERE LOWER(c.name) = LOWER(:categoryName) " +
-                  "AND r.is_published = true", 
+                  "AND r.is_published = true",
            nativeQuery = true)
     Page<Recipe> findByCategoryName(@Param("categoryName") String categoryName, Pageable pageable);
-} 
+
+    // Admin user management methods
+    long countByUser(User user);
+}

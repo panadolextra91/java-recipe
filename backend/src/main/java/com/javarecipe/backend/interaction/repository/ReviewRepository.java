@@ -34,4 +34,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.recipe.id = :recipeId GROUP BY r.rating ORDER BY r.rating")
     List<Object[]> findRatingDistributionByRecipeId(@Param("recipeId") Long recipeId);
+
+    // Admin user management methods
+    long countByUser(User user);
 }

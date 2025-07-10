@@ -1,5 +1,6 @@
 package com.javarecipe.backend.recipe.controller;
 
+import com.javarecipe.backend.common.service.CloudinaryService;
 import com.javarecipe.backend.recipe.dto.RecipeRequest;
 import com.javarecipe.backend.recipe.entity.Recipe;
 import com.javarecipe.backend.recipe.service.RecipeService;
@@ -16,8 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,10 +34,12 @@ import java.util.Map;
 public class RecipeController {
 
     private final RecipeService recipeService;
-    
+    private final CloudinaryService cloudinaryService;
+
     @Autowired
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeService recipeService, CloudinaryService cloudinaryService) {
         this.recipeService = recipeService;
+        this.cloudinaryService = cloudinaryService;
     }
     
     @GetMapping
@@ -97,12 +104,80 @@ public class RecipeController {
     
     @PostMapping
     public ResponseEntity<?> createRecipe(
-            @Valid @RequestBody RecipeRequest recipeRequest, 
+            @Valid @RequestBody RecipeRequest recipeRequest,
             @AuthenticationPrincipal User currentUser) {
-        
+
         try {
             Recipe savedRecipe = recipeService.createRecipe(recipeRequest, currentUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedRecipe);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Failed to create recipe: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/with-images")
+    public ResponseEntity<?> createRecipeWithImages(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "prepTime", required = false) Integer prepTime,
+            @RequestParam(value = "cookTime", required = false) Integer cookTime,
+            @RequestParam(value = "servings", required = false) Integer servings,
+            @RequestParam(value = "difficulty", required = false) String difficulty,
+            @RequestParam(value = "isPublished", defaultValue = "false") boolean isPublished,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "ingredients", required = false) String ingredientsJson,
+            @RequestParam(value = "instructions", required = false) String instructionsJson,
+            @AuthenticationPrincipal User currentUser) {
+
+        try {
+            // Create basic recipe request
+            RecipeRequest recipeRequest = new RecipeRequest();
+            recipeRequest.setTitle(title);
+            recipeRequest.setDescription(description);
+            recipeRequest.setPrepTime(prepTime);
+            recipeRequest.setCookTime(cookTime);
+            recipeRequest.setServings(servings);
+            recipeRequest.setDifficulty(difficulty);
+            recipeRequest.setPublished(isPublished);
+
+            // Handle image uploads
+            List<RecipeRequest.RecipeImageRequest> imageRequests = new ArrayList<>();
+            if (images != null && !images.isEmpty()) {
+                for (int i = 0; i < images.size(); i++) {
+                    MultipartFile image = images.get(i);
+                    try {
+                        CloudinaryService.CloudinaryUploadResult uploadResult =
+                                cloudinaryService.uploadRecipeImage(image);
+
+                        RecipeRequest.RecipeImageRequest imageRequest = new RecipeRequest.RecipeImageRequest();
+                        imageRequest.setImageUrl(uploadResult.getUrl());
+                        imageRequest.setPrimary(i == 0); // First image is primary
+                        imageRequest.setDisplayOrder(i + 1);
+
+                        imageRequests.add(imageRequest);
+                    } catch (IOException e) {
+                        Map<String, String> response = new HashMap<>();
+                        response.put("message", "Failed to upload image: " + e.getMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                    }
+                }
+            }
+            recipeRequest.setImages(imageRequests);
+
+            // TODO: Parse ingredients and instructions JSON if provided
+            // For now, we'll leave them empty - this can be enhanced later
+
+            Recipe savedRecipe = recipeService.createRecipe(recipeRequest, currentUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Recipe created successfully with images");
+            response.put("recipe", savedRecipe);
+            response.put("uploadedImages", imageRequests.size());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
         } catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Failed to create recipe: " + e.getMessage());

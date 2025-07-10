@@ -25,6 +25,9 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     long countByComment(Comment comment);
     
     void deleteByUserAndRecipe(User user, Recipe recipe);
-    
+
     void deleteByUserAndComment(User user, Comment comment);
-} 
+
+    // Admin user management methods
+    long countByUser(User user);
+}

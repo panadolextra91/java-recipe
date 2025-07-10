@@ -27,4 +27,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     
     @Query("SELECT f.recipe FROM Favorite f WHERE f.user.id = :userId")
     Page<Recipe> findFavoriteRecipesByUserId(@Param("userId") Long userId, Pageable pageable);
-} 
+
+    // Admin user management methods
+    long countByUser(User user);
+}

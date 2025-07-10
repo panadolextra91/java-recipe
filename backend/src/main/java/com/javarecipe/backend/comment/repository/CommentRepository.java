@@ -23,6 +23,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     
     @Query("SELECT c FROM Comment c WHERE c.recipe.id = :recipeId AND c.parentComment IS NULL ORDER BY c.createdAt DESC")
     Page<Comment> findTopLevelCommentsByRecipeId(@Param("recipeId") Long recipeId, Pageable pageable);
-    
+
     long countByRecipe(Recipe recipe);
-} 
+
+    // Admin user management methods
+    long countByUser(User user);
+}
