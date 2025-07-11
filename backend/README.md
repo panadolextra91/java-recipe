@@ -14,6 +14,7 @@ This is the backend service for the Java Recipe application, built with Spring B
 - ✅ Admin Management System (categories, warnings, users)
 - ✅ User Search & Filtering (advanced admin capabilities)
 - ✅ Role Management (promote/demote users)
+- ✅ "Recipes I Can Make" Search (ingredient-based recipe discovery)
 - ✅ Comprehensive API with Pagination
 - ✅ Full Test Coverage
 
@@ -115,6 +116,16 @@ The application will start on port 8080. You can test it by accessing:
 - **Safe Operations**: Protected deletion with content validation
 - **Admin-Only Access**: Proper role-based authorization for all admin endpoints
 
+**"Recipes I Can Make" Search System**
+- **Ingredient Discovery**: Extract and search all available ingredients from recipes
+- **Smart Recipe Matching**: Sophisticated algorithm with percentage-based matching
+- **Match Calculation**: Accurate tracking of available vs missing ingredients
+- **Flexible Filtering**: Filter by match percentage, exact matches, and categories
+- **Multiple Sorting**: Sort by match percentage, rating, popularity, or date
+- **Missing Ingredient Tracking**: Shows exactly what ingredients are needed
+- **Case-Insensitive Search**: Flexible ingredient name matching and comparison
+- **Recipe Count Tracking**: Shows how many recipes use each ingredient
+
 ### Technical Highlights
 
 **Database Design**
@@ -189,6 +200,13 @@ src/main/java/com/javarecipe/backend/
 ### Consumer Warnings (Public)
 - `GET /api/consumer-warnings` - Get all consumer warnings
 - `GET /api/consumer-warnings/{id}` - Get consumer warning by ID
+
+### Recipe Search ("Recipes I Can Make")
+- `GET /api/recipe-search/ingredients` - Search/get all available ingredients
+- `POST /api/recipe-search/recipes` - Find recipes by available ingredients
+- `POST /api/recipe-search/recipes/{id}/match` - Calculate match for specific recipe
+- `POST /api/recipe-search/recipes/{id}/missing-ingredients` - Get missing ingredients
+- `GET /api/recipe-search/example` - Get example search request
 
 ### Admin Management (Admin Only)
 - `GET /api/admin/categories` - Get categories (paginated)
@@ -297,6 +315,36 @@ curl -X PUT \
   http://localhost:8080/api/admin/users/1/status
 ```
 
+## 🔍 "Recipes I Can Make" Examples
+
+### Search Available Ingredients
+```bash
+curl -X GET \
+  "http://localhost:8080/api/recipe-search/ingredients?query=chicken"
+```
+
+### Find Recipes by Ingredients
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "availableIngredients": ["chicken", "rice", "onion", "garlic"],
+    "minMatchPercentage": 70.0,
+    "exactMatchOnly": false,
+    "sortBy": "matchPercentage",
+    "sortDirection": "desc"
+  }' \
+  "http://localhost:8080/api/recipe-search/recipes?page=0&size=10"
+```
+
+### Check Recipe Match
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '["chicken", "rice", "onion"]' \
+  http://localhost:8080/api/recipe-search/recipes/1/match
+```
+
 ## �🚧 Development
 
 - The database schema is automatically created/updated using JPA/Hibernate
@@ -307,12 +355,17 @@ curl -X PUT \
 ## 🔮 Upcoming Features
 
 - Content moderation & reporting system
-- Advanced search functionality
-- "Recipes I Can Make" ingredient-based search
 - Real-time notifications via WebSocket
 - Email notification summaries
 
 ## 🌟 Recent Updates
+
+**"Recipes I Can Make" Search System** - Intelligent ingredient-based recipe discovery:
+- Smart ingredient extraction and search from all recipes
+- Sophisticated recipe matching algorithm with percentage calculations
+- Flexible filtering by match percentage, exact matches, and categories
+- Missing ingredient tracking and shopping assistance
+- Multiple sorting options for optimal recipe discovery
 
 **Admin Management System** - Complete administrative control over the platform:
 - Category management with CRUD operations and usage tracking

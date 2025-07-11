@@ -1,0 +1,636 @@
+# Java Recipe Backend API Documentation
+
+## Base URL
+```
+http://localhost:8080/api
+```
+
+## Authentication
+- **JWT Token**: Required for protected endpoints
+- **Header**: `Authorization: Bearer <JWT_TOKEN>`
+- **Admin Role**: Required for admin endpoints (`ROLE_ADMIN`)
+- **User Role**: Required for user-specific endpoints (`ROLE_USER`)
+
+---
+
+## 1. AUTHENTICATION & USER MANAGEMENT
+
+### 1.1 Authentication
+```
+POST /auth/register
+Authentication: None
+Content-Type: application/json
+Body: {
+  "username": "string",
+  "email": "string", 
+  "password": "string",
+  "firstName": "string",
+  "lastName": "string"
+}
+```
+
+```
+POST /auth/login
+Authentication: None
+Content-Type: application/json
+Body: {
+  "username": "string",
+  "password": "string"
+}
+```
+
+```
+POST /auth/forgot-password
+Authentication: None
+Content-Type: application/json
+Body: {
+  "email": "string"
+}
+```
+
+```
+POST /auth/reset-password
+Authentication: None
+Content-Type: application/json
+Body: {
+  "token": "string",
+  "newPassword": "string"
+}
+```
+
+### 1.2 User Profile Management
+```
+POST /users/me/change-password-simple
+Authentication: Required (JWT)
+Content-Type: application/json
+Body: {
+  "currentPassword": "string",
+  "newPassword": "string"
+}
+```
+
+```
+POST /users/me/avatar
+Authentication: Required (JWT)
+Content-Type: multipart/form-data
+Body: file (image file)
+```
+
+```
+DELETE /users/me/avatar
+Authentication: Required (JWT)
+```
+
+---
+
+## 2. RECIPES & IMAGES
+
+### 2.1 Recipe Management
+```
+GET /recipes
+Authentication: None
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+POST /recipes
+Authentication: Required (JWT)
+Content-Type: application/json
+Body: {
+  "title": "string",
+  "description": "string",
+  "prepTime": "integer",
+  "cookTime": "integer", 
+  "servings": "integer",
+  "difficulty": "string",
+  "isPublished": "boolean",
+  "ingredients": [
+    {
+      "name": "string",
+      "quantity": "string",
+      "unit": "string",
+      "displayOrder": "integer"
+    }
+  ],
+  "instructions": [
+    {
+      "description": "string",
+      "stepNumber": "integer"
+    }
+  ],
+  "categoryIds": ["long"],
+  "consumerWarningIds": ["long"]
+}
+```
+
+```
+POST /recipes/with-images
+Authentication: Required (JWT)
+Content-Type: multipart/form-data
+Body: 
+  title: string
+  description: string
+  prepTime: integer
+  cookTime: integer
+  servings: integer
+  difficulty: string
+  isPublished: boolean
+  images: file[] (image files)
+  + JSON fields for ingredients, instructions, categoryIds, consumerWarningIds
+```
+
+```
+GET /recipes/{id}
+Authentication: None
+```
+
+```
+PUT /recipes/{id}
+Authentication: Required (JWT - Recipe Owner or Admin)
+Content-Type: application/json
+Body: Same as POST /recipes
+```
+
+```
+DELETE /recipes/{id}
+Authentication: Required (JWT - Recipe Owner or Admin)
+```
+
+### 2.2 Image Management
+```
+POST /images/upload/recipe
+Authentication: Required (JWT)
+Content-Type: multipart/form-data
+Body: file (image file)
+```
+
+```
+POST /images/upload/{folder}
+Authentication: Required (JWT)
+Content-Type: multipart/form-data
+Body: file (image file)
+```
+
+```
+DELETE /images/{publicId}
+Authentication: Required (JWT)
+```
+
+```
+GET /images/{publicId}/thumbnail
+Authentication: None
+Query Parameters: width, height
+```
+
+---
+
+## 3. SOCIAL FEATURES
+
+### 3.1 Comments
+```
+POST /comments
+Authentication: Required (JWT)
+Content-Type: application/json
+Body: {
+  "recipeId": "long",
+  "content": "string",
+  "parentCommentId": "long" (optional)
+}
+```
+
+```
+GET /comments/recipe/{recipeId}
+Authentication: None
+Query Parameters: page, size
+```
+
+### 3.2 Likes
+```
+POST /likes/recipe/{id}
+Authentication: Required (JWT)
+```
+
+```
+POST /likes/comment/{id}
+Authentication: Required (JWT)
+```
+
+### 3.3 Favorites
+```
+POST /favorites/recipe/{id}
+Authentication: Required (JWT)
+```
+
+```
+GET /favorites
+Authentication: Required (JWT)
+Query Parameters: page, size
+```
+
+### 3.4 Reviews
+```
+POST /reviews
+Authentication: Required (JWT)
+Content-Type: application/json
+Body: {
+  "recipeId": "long",
+  "rating": "integer (1-5)",
+  "comment": "string"
+}
+```
+
+```
+GET /reviews/recipe/{recipeId}
+Authentication: None
+Query Parameters: page, size
+```
+
+---
+
+## 4. NOTIFICATIONS
+
+```
+GET /notifications
+Authentication: Required (JWT)
+Query Parameters: page, size
+```
+
+```
+GET /notifications/unread-count
+Authentication: Required (JWT)
+```
+
+```
+PUT /notifications/{id}/read
+Authentication: Required (JWT)
+```
+
+```
+PUT /notifications/mark-all-read
+Authentication: Required (JWT)
+```
+
+---
+
+## 5. CONSUMER WARNINGS (PUBLIC)
+
+```
+GET /consumer-warnings
+Authentication: None
+```
+
+```
+GET /consumer-warnings/{id}
+Authentication: None
+```
+
+---
+
+## 6. RECIPE SEARCH ("Recipes I Can Make")
+
+```
+GET /recipe-search/ingredients
+Authentication: None
+Query Parameters: query (optional)
+```
+
+```
+POST /recipe-search/recipes
+Authentication: None
+Content-Type: application/json
+Query Parameters: page, size
+Body: {
+  "availableIngredients": ["string"],
+  "minMatchPercentage": "double (0.0-100.0)",
+  "exactMatchOnly": "boolean",
+  "categoryIds": ["long"] (optional),
+  "sortBy": "string (matchPercentage|rating|viewCount|createdAt)",
+  "sortDirection": "string (asc|desc)"
+}
+```
+
+```
+POST /recipe-search/recipes/{recipeId}/match
+Authentication: None
+Content-Type: application/json
+Body: ["string"] (array of available ingredients)
+```
+
+```
+POST /recipe-search/recipes/{recipeId}/missing-ingredients
+Authentication: None
+Content-Type: application/json
+Body: ["string"] (array of available ingredients)
+```
+
+```
+GET /recipe-search/example
+Authentication: None
+```
+
+---
+
+## 7. ADMIN MANAGEMENT (Admin Only)
+
+### 7.1 Category Management
+```
+GET /admin/categories
+Authentication: Required (JWT - Admin)
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+GET /admin/categories/all
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/categories/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+POST /admin/categories
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "name": "string",
+  "description": "string"
+}
+```
+
+```
+PUT /admin/categories/{id}
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "name": "string",
+  "description": "string"
+}
+```
+
+```
+DELETE /admin/categories/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/categories/check-name
+Authentication: Required (JWT - Admin)
+Query Parameters: name
+```
+
+### 7.2 Consumer Warning Management
+```
+GET /admin/consumer-warnings
+Authentication: Required (JWT - Admin)
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+GET /admin/consumer-warnings/all
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/consumer-warnings/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+POST /admin/consumer-warnings
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "name": "string",
+  "description": "string"
+}
+```
+
+```
+PUT /admin/consumer-warnings/{id}
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "name": "string",
+  "description": "string"
+}
+```
+
+```
+DELETE /admin/consumer-warnings/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/consumer-warnings/check-name
+Authentication: Required (JWT - Admin)
+Query Parameters: name
+```
+
+### 7.3 User Management
+```
+GET /admin/users
+Authentication: Required (JWT - Admin)
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+GET /admin/users/all
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/users/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/users/search
+Authentication: Required (JWT - Admin)
+Query Parameters: query, page, size, sortBy, sortDir
+```
+
+```
+GET /admin/users/status/{active}
+Authentication: Required (JWT - Admin)
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+GET /admin/users/role/{role}
+Authentication: Required (JWT - Admin)
+Query Parameters: page, size, sortBy, sortDir
+```
+
+```
+PUT /admin/users/{id}/status
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "active": "boolean"
+}
+```
+
+```
+PUT /admin/users/{id}/roles
+Authentication: Required (JWT - Admin)
+Content-Type: application/json
+Body: {
+  "roles": ["string"] (e.g., ["ROLE_USER", "ROLE_ADMIN"])
+}
+```
+
+```
+DELETE /admin/users/{id}
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/users/{id}/activity
+Authentication: Required (JWT - Admin)
+```
+
+```
+GET /admin/users/roles
+Authentication: Required (JWT - Admin)
+```
+
+---
+
+## 8. EXAMPLE RESPONSES
+
+### Recipe Search Response
+```json
+{
+  "recipes": {
+    "content": [
+      {
+        "id": 1,
+        "title": "Chicken Fried Rice",
+        "description": "Delicious chicken fried rice",
+        "matchPercentage": 100.0,
+        "totalIngredients": 4,
+        "matchedIngredients": 4,
+        "missingIngredients": [],
+        "availableIngredients": ["chicken", "rice", "onion", "garlic"],
+        "authorUsername": "chef_john",
+        "primaryImageUrl": "http://example.com/image.jpg",
+        "categories": ["Main Course", "Asian"],
+        "averageRating": 4.5,
+        "reviewCount": 10,
+        "viewCount": 100
+      }
+    ],
+    "totalElements": 1
+  },
+  "searchCriteria": {
+    "availableIngredients": ["chicken", "rice", "onion", "garlic"],
+    "minMatchPercentage": 70.0
+  },
+  "totalResults": 1
+}
+```
+
+### Ingredient Search Response
+```json
+[
+  {
+    "name": "chicken",
+    "recipeCount": 25
+  },
+  {
+    "name": "chicken breast",
+    "recipeCount": 12
+  }
+]
+```
+
+### Recipe Match Response
+```json
+{
+  "recipeId": 1,
+  "matchPercentage": 75.0,
+  "missingIngredients": ["garlic"],
+  "availableIngredients": ["chicken", "rice", "onion"],
+  "totalMissingCount": 1,
+  "totalAvailableCount": 3
+}
+```
+
+### Admin User Response
+```json
+{
+  "id": 1,
+  "username": "john_doe",
+  "email": "john@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "displayName": "John Doe",
+  "active": true,
+  "createdAt": "2025-01-01T10:00:00",
+  "lastLogin": "2025-01-10T15:30:00",
+  "roles": ["ROLE_USER"],
+  "recipeCount": 15,
+  "commentCount": 42,
+  "reviewCount": 8,
+  "likeCount": 156,
+  "favoriteCount": 23
+}
+```
+
+---
+
+## Response Formats
+
+### Success Response
+```json
+{
+  "message": "Operation successful",
+  "data": { ... }
+}
+```
+
+### Error Response
+```json
+{
+  "message": "Error description",
+  "timestamp": "2025-01-01T10:00:00Z",
+  "status": 400
+}
+```
+
+### Paginated Response
+```json
+{
+  "content": [ ... ],
+  "totalElements": 100,
+  "totalPages": 10,
+  "size": 10,
+  "number": 0,
+  "first": true,
+  "last": false
+}
+```
+
+---
+
+## Common Query Parameters
+
+- **page**: Page number (0-based, default: 0)
+- **size**: Page size (default: 20, max: 100)
+- **sortBy**: Field to sort by
+- **sortDir**: Sort direction (asc|desc, default: desc)
+
+---
+
+## HTTP Status Codes
+
+- **200**: Success
+- **201**: Created
+- **400**: Bad Request
+- **401**: Unauthorized
+- **403**: Forbidden
+- **404**: Not Found
+- **409**: Conflict
+- **500**: Internal Server Error
