@@ -46,6 +46,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/recipes/{id}").permitAll()
                         .requestMatchers("/api/recipes/search").permitAll()
                         .requestMatchers("/api/recipes/category/**").permitAll()
+                        .requestMatchers("/api/consumer-warnings/**").permitAll()
+                        .requestMatchers("/api/recipe-search/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
