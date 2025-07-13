@@ -634,3 +634,182 @@ Authentication: Required (JWT - Admin)
 - **404**: Not Found
 - **409**: Conflict
 - **500**: Internal Server Error
+
+---
+
+## 🧪 PRACTICAL API TESTING GUIDE
+
+### Getting Started with API Testing
+
+1. **Start the application:**
+   ```bash
+   ./gradlew bootRun
+   ```
+
+2. **Test basic connectivity:**
+   ```bash
+   curl http://localhost:8080/api/consumer-warnings
+   ```
+
+3. **Register a new user:**
+   ```bash
+   curl -X POST http://localhost:8080/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "username": "testuser",
+       "email": "test@example.com",
+       "password": "password123",
+       "firstName": "Test",
+       "lastName": "User"
+     }'
+   ```
+
+4. **Login and get JWT token:**
+   ```bash
+   curl -X POST http://localhost:8080/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "username": "testuser",
+       "password": "password123"
+     }' | jq -r '.token'
+   ```
+
+5. **Use the token for authenticated requests:**
+   ```bash
+   export JWT_TOKEN="your-jwt-token-here"
+
+   curl -X GET http://localhost:8080/api/notifications \
+     -H "Authorization: Bearer $JWT_TOKEN"
+   ```
+
+### Recipe Management Examples
+
+#### Create Recipe with Images
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -F "title=Chocolate Cake" \
+  -F "description=Delicious chocolate cake" \
+  -F "isPublished=true" \
+  -F "images=@image1.jpg" \
+  -F "images=@image2.jpg" \
+  http://localhost:8080/api/recipes/with-images
+```
+
+#### Upload Avatar
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -F "file=@profile-picture.jpg" \
+  http://localhost:8080/api/users/me/avatar
+```
+
+### "Recipes I Can Make" Examples
+
+#### Search Available Ingredients
+```bash
+curl -X GET \
+  "http://localhost:8080/api/recipe-search/ingredients?query=chicken"
+```
+
+#### Find Recipes by Ingredients
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "availableIngredients": ["chicken", "rice", "onion", "garlic"],
+    "minMatchPercentage": 70.0,
+    "exactMatchOnly": false,
+    "sortBy": "matchPercentage",
+    "sortDirection": "desc"
+  }' \
+  "http://localhost:8080/api/recipe-search/recipes?page=0&size=10"
+```
+
+#### Check Recipe Match
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '["chicken", "rice", "onion"]' \
+  http://localhost:8080/api/recipe-search/recipes/1/match
+```
+
+### Admin Management Examples
+
+#### Create Category (Admin Required)
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ADMIN_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Mediterranean", "description": "Mediterranean cuisine recipes"}' \
+  http://localhost:8080/api/admin/categories
+```
+
+#### Search Users (Admin Required)
+```bash
+curl -X GET \
+  -H "Authorization: Bearer $ADMIN_JWT_TOKEN" \
+  "http://localhost:8080/api/admin/users/search?query=john&page=0&size=10"
+```
+
+#### Promote User to Admin
+```bash
+curl -X PUT \
+  -H "Authorization: Bearer $ADMIN_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"roles": ["ROLE_USER", "ROLE_ADMIN"]}' \
+  http://localhost:8080/api/admin/users/1/roles
+```
+
+#### Deactivate User
+```bash
+curl -X PUT \
+  -H "Authorization: Bearer $ADMIN_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"active": false}' \
+  http://localhost:8080/api/admin/users/1/status
+```
+
+### Testing Tools Recommendations
+
+- **curl**: Command-line HTTP client (examples above)
+- **Postman**: GUI-based API testing tool
+- **Insomnia**: Alternative GUI-based API client
+- **HTTPie**: User-friendly command-line HTTP client
+- **jq**: JSON processor for parsing responses
+
+#### Using HTTPie (Alternative to curl)
+```bash
+# Install HTTPie
+pip install httpie
+
+# Register user
+http POST localhost:8080/api/auth/register \
+  username=testuser email=test@example.com password=password123 \
+  firstName=Test lastName=User
+
+# Login
+http POST localhost:8080/api/auth/login \
+  username=testuser password=password123
+
+# Authenticated request
+http GET localhost:8080/api/notifications \
+  Authorization:"Bearer $JWT_TOKEN"
+```
+
+---
+
+## 📊 TESTING STATUS
+
+**✅ ALL ENDPOINTS TESTED AND VERIFIED WORKING**
+
+- **Total Endpoints**: 50+ endpoints
+- **Authentication**: JWT-based with role authorization
+- **Image Upload**: Cloudinary integration tested
+- **Social Features**: Comments, likes, favorites, reviews
+- **Admin Management**: Categories, warnings, users
+- **Recipe Search**: Ingredient-based matching
+- **Notifications**: Real-time with batching
+- **Error Handling**: Proper status codes and messages
+
+**🎯 Production Ready**: All core functionality implemented and tested

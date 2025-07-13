@@ -233,7 +233,35 @@ public class RecipeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
+
+    @PutMapping("/{id}/publish")
+    public ResponseEntity<?> publishRecipe(
+            @PathVariable Long id,
+            @RequestParam boolean publish,
+            @AuthenticationPrincipal User currentUser) {
+        try {
+            Recipe recipe = recipeService.setUserRecipePublishedStatus(id, publish, currentUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", publish ? "Recipe published successfully" : "Recipe unpublished successfully");
+            response.put("recipe", recipe);
+
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Recipe not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (AccessDeniedException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "You are not authorized to publish/unpublish this recipe");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Failed to update recipe publication status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @GetMapping("/user")
     public ResponseEntity<Map<String, Object>> getUserRecipes(
             @AuthenticationPrincipal User currentUser,

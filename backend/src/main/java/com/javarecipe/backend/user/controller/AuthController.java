@@ -3,6 +3,8 @@ package com.javarecipe.backend.user.controller;
 import com.javarecipe.backend.common.config.JwtTokenUtil;
 import com.javarecipe.backend.user.dto.AuthRequest;
 import com.javarecipe.backend.user.dto.AuthResponse;
+import com.javarecipe.backend.user.dto.PasswordResetDTO;
+import com.javarecipe.backend.user.dto.PasswordResetRequestDTO;
 import com.javarecipe.backend.user.dto.RegisterRequest;
 import com.javarecipe.backend.user.entity.User;
 import com.javarecipe.backend.user.entity.UserRole;
@@ -126,4 +128,23 @@ public class AuthController {
                 user.getRoles().stream().map(UserRole::getName).toList()
         ));
     }
-} 
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> requestPasswordReset(@Valid @RequestBody PasswordResetRequestDTO requestDTO) {
+        userService.requestPasswordReset(requestDTO.getEmail());
+
+        // Always return success to prevent email enumeration
+        return ResponseEntity.ok(Map.of("message", "If your email exists in our system, you will receive a password reset link shortly."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetDTO resetDTO) {
+        boolean success = userService.resetPassword(resetDTO);
+
+        if (success) {
+            return ResponseEntity.ok(Map.of("message", "Password has been reset successfully"));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired token, or passwords don't match"));
+        }
+    }
+}

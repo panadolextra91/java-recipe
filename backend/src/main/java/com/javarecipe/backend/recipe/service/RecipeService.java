@@ -67,7 +67,12 @@ public interface RecipeService {
      * Set recipe published status (admin only)
      */
     Recipe setRecipePublishedStatus(Long id, boolean publish);
-    
+
+    /**
+     * Set recipe published status for user's own recipe
+     */
+    Recipe setUserRecipePublishedStatus(Long id, boolean publish, User user);
+
     /**
      * Delete any recipe by ID (admin only)
      */

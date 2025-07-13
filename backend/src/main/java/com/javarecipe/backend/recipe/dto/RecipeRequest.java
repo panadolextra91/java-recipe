@@ -1,5 +1,6 @@
 package com.javarecipe.backend.recipe.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -37,7 +38,8 @@ public class RecipeRequest {
     private Integer servings;
     
     private String difficulty;
-    
+
+    @JsonProperty("isPublished")
     private boolean isPublished = false;
     
     private Set<Long> categoryIds = new HashSet<>();

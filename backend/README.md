@@ -5,7 +5,7 @@ This is the backend service for the Java Recipe application, built with Spring B
 ## 🚀 Current Status
 
 **Production Ready** - Core functionality fully implemented and tested:
-- ✅ User Management & Authentication (including manual password change)
+- ✅ User Management & Authentication (JWT-based with password reset)
 - ✅ Recipe Management (CRUD with images, ingredients, instructions)
 - ✅ Image Management (Cloudinary integration for recipes and avatars)
 - ✅ Avatar Management (upload, delete, change with optimization)
@@ -15,54 +15,286 @@ This is the backend service for the Java Recipe application, built with Spring B
 - ✅ User Search & Filtering (advanced admin capabilities)
 - ✅ Role Management (promote/demote users)
 - ✅ "Recipes I Can Make" Search (ingredient-based recipe discovery)
-- ✅ Comprehensive API with Pagination
-- ✅ Full Test Coverage
+- ✅ Comprehensive REST API with Pagination
+- ✅ Full Test Coverage (50+ endpoints tested)
 
-## Prerequisites
+## 🚀 Quick Start Guide
 
-- Java 17 or higher
-- MySQL 8.0 or higher
-- Gradle (or use the included Gradle wrapper)
+### Prerequisites
 
-## Setup
+Before you begin, ensure you have the following installed:
+- **Java 17 or higher** ([Download here](https://adoptium.net/))
+- **MySQL 8.0 or higher** ([Download here](https://dev.mysql.com/downloads/mysql/))
+- **Git** ([Download here](https://git-scm.com/downloads))
 
-1. **Clone the repository**
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/java-recipe.git
+cd java-recipe/backend
+```
+
+### 2. Database Setup
+
+Create a MySQL database for the application:
+
+```sql
+-- Connect to MySQL as root
+mysql -u root -p
+
+-- Create database
+CREATE DATABASE java_recipe_db;
+
+-- Create user (optional, for security)
+CREATE USER 'recipe_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON java_recipe_db.* TO 'recipe_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 3. Configure Application Properties
+
+Create or update `src/main/resources/application.properties`:
+
+```properties
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/java_recipe_db
+spring.datasource.username=recipe_user
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# JWT Configuration
+jwt.secret=your-super-secret-jwt-key-here-make-it-long-and-secure
+jwt.expiration=86400000
+
+# Cloudinary Configuration (for image uploads)
+cloudinary.cloud-name=your-cloud-name
+cloudinary.api-key=your-api-key
+cloudinary.api-secret=your-api-secret
+
+# Server Configuration
+server.port=8080
+```
+
+**⚠️ Important Security Notes:**
+- Replace `your_password` with a secure database password
+- Replace JWT secret with a long, random string (at least 32 characters)
+- Get your own Cloudinary credentials from [cloudinary.com](https://cloudinary.com/)
+
+### 4. Run the Application
+
+Using Gradle wrapper (recommended):
+```bash
+# Make the wrapper executable (Linux/Mac)
+chmod +x gradlew
+
+# Run the application
+./gradlew bootRun
+```
+
+On Windows:
+```cmd
+gradlew.bat bootRun
+```
+
+Or using your IDE:
+- Import the project as a Gradle project
+- Run the `BackendApplication.java` main class
+
+### 5. Verify Installation
+
+The application should start on `http://localhost:8080`. You can verify it's working by:
+
+```bash
+# Check if the server is running
+curl http://localhost:8080/api/consumer-warnings
+
+# Should return a list of consumer warnings like:
+# [{"id":1,"name":"Contains Nuts","description":null,"recipeCount":0}, ...]
+```
+
+### 6. Create Your First Admin User
+
+The application automatically creates default data on first startup. You can:
+
+1. **Use the default admin account:**
+   - Username: `admin`
+   - Email: `admin@javarecipe.com`
+   - Password: `admin123`
+
+2. **Or register a new user and promote to admin:**
    ```bash
-   git clone <repository-url>
-   cd java-recipe/backend
+   # Register a new user
+   curl -X POST http://localhost:8080/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "username": "yourusername",
+       "email": "your@email.com",
+       "password": "yourpassword",
+       "firstName": "Your",
+       "lastName": "Name"
+     }'
    ```
 
-2. **Configure MySQL**
-   - Make sure MySQL is installed and running
-   - The application is configured to create a database named `javarecipe` if it doesn't exist
-   - Update the database credentials in `src/main/resources/application.properties` if needed:
-     ```properties
-     spring.datasource.username=root
-     spring.datasource.password=
-     ```
-
-3. **Configure Cloudinary (for image upload)**
-   - The application is pre-configured with Cloudinary credentials
-   - Images are automatically uploaded to the configured Cloudinary account
-   - Configuration in `application.properties`:
-     ```properties
-     cloudinary.cloud-name=duy8dombh
-     cloudinary.api-key=352188284543682
-     cloudinary.api-secret=dcED4bZAlKhDr1trgPze_9Z1DK8
-     ```
-
-4. **Build the application**
+3. **Login to get JWT token:**
    ```bash
-   ./gradlew build
+   # Login with admin credentials
+   curl -X POST http://localhost:8080/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "username": "admin",
+       "password": "admin123"
+     }'
+
+   # Save the returned token for authenticated requests
+   export JWT_TOKEN="your-jwt-token-here"
    ```
 
-5. **Run the application**
-   ```bash
-   ./gradlew bootRun
-   ```
+### Additional Development Tools
 
-The application will start on port 8080. You can test it by accessing:
-- http://localhost:8080/api/test
+**IDE Setup:**
+- **IntelliJ IDEA**: Import as Gradle project, enable annotation processing
+- **VS Code**: Install Java Extension Pack and Spring Boot Extension Pack
+- **Eclipse**: Import as existing Gradle project
+
+**Useful Gradle Commands:**
+```bash
+# Build the project
+./gradlew build
+
+# Run tests
+./gradlew test
+
+# Clean build
+./gradlew clean build
+
+# Run with specific profile
+./gradlew bootRun --args='--spring.profiles.active=dev'
+
+# Generate test reports
+./gradlew test jacocoTestReport
+```
+
+**Database Management:**
+```bash
+# Reset database (drops and recreates all tables)
+# Set spring.jpa.hibernate.ddl-auto=create-drop in application.properties
+
+# View database schema
+mysql -u recipe_user -p java_recipe_db
+SHOW TABLES;
+DESCRIBE recipes;
+```
+
+## 🧪 Testing
+
+Run the test suite:
+```bash
+# Run all tests
+./gradlew test
+
+# Run specific test class
+./gradlew test --tests "*RecipeServiceTest*"
+
+# Run tests with coverage
+./gradlew test jacocoTestReport
+```
+
+Test coverage reports are generated in `build/reports/jacoco/test/html/index.html`
+
+## 🚀 Production Deployment
+
+### Environment Variables
+
+For production, use environment variables instead of application.properties:
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:mysql://your-db-host:3306/java_recipe_db
+export SPRING_DATASOURCE_USERNAME=your-db-user
+export SPRING_DATASOURCE_PASSWORD=your-db-password
+export JWT_SECRET=your-production-jwt-secret
+export CLOUDINARY_CLOUD_NAME=your-cloud-name
+export CLOUDINARY_API_KEY=your-api-key
+export CLOUDINARY_API_SECRET=your-api-secret
+```
+
+### Docker Deployment
+
+Create a `Dockerfile`:
+```dockerfile
+FROM openjdk:17-jdk-slim
+COPY build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+Build and run:
+```bash
+./gradlew build
+docker build -t java-recipe-backend .
+docker run -p 8080:8080 java-recipe-backend
+```
+
+## 📁 Project Structure
+
+```
+backend/
+├── src/main/java/com/javarecipe/backend/
+│   ├── admin/                 # Admin management (categories, warnings, users)
+│   ├── auth/                  # Authentication & authorization
+│   ├── comment/               # Comment system
+│   ├── common/                # Shared utilities & configuration
+│   ├── image/                 # Image management (Cloudinary)
+│   ├── interaction/           # Social features (likes, favorites, reviews)
+│   ├── notification/          # Notification system with batching
+│   ├── recipe/                # Recipe management & search
+│   ├── user/                  # User management & profiles
+│   └── BackendApplication.java # Main application class
+├── src/main/resources/
+│   ├── application.properties # Configuration file
+│   └── data.sql              # Initial data (categories, warnings, admin user)
+├── src/test/java/            # Unit and integration tests
+├── build.gradle              # Gradle build configuration
+└── README.md                 # This file
+```
+
+### Key Components
+
+- **Controllers**: REST API endpoints (`@RestController`)
+- **Services**: Business logic (`@Service`)
+- **Repositories**: Data access layer (`@Repository`)
+- **Entities**: JPA database models (`@Entity`)
+- **DTOs**: Data transfer objects for API responses
+- **Config**: Security, CORS, and application configuration
+
+## � API Documentation
+
+The application provides comprehensive REST APIs with **50+ endpoints** covering all functionality.
+
+**📖 For Complete API Documentation**: Please refer to [`api.txt`](api.txt)
+
+The `api.txt` file contains:
+- ✅ **All 50+ endpoint specifications** with detailed request/response examples
+- ✅ **Authentication and authorization** details for each endpoint
+- ✅ **Request body schemas** and response formats
+- ✅ **Query parameters** and pagination options
+- ✅ **HTTP status codes** and error handling
+- ✅ **Practical testing examples** with curl and HTTPie
+- ✅ **Step-by-step testing workflows** for all features
+- ✅ **Admin management examples** and user operations
+
+**🔗 Base URL**: `http://localhost:8080/api`
+
+**🔑 Authentication**: JWT-based with role-based authorization (USER, ADMIN)
+
+**� Quick Test**: After starting the app, test connectivity with:
+```bash
+curl http://localhost:8080/api/consumer-warnings
+```
 
 ## 🏗️ Architecture & Features
 
@@ -160,72 +392,6 @@ src/main/java/com/javarecipe/backend/
 └── config/         # Security and application configuration
 ```
 
-## 🔌 API Endpoints
-
-### Authentication & User Management
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/forgot-password` - Password reset request
-- `POST /api/auth/reset-password` - Password reset confirmation
-- `POST /api/users/me/change-password-simple` - Manual password change
-- `POST /api/users/me/avatar` - Upload/change avatar
-- `DELETE /api/users/me/avatar` - Delete avatar
-
-### Recipes & Images
-- `GET /api/recipes` - List recipes (paginated)
-- `POST /api/recipes` - Create recipe (JSON)
-- `POST /api/recipes/with-images` - Create recipe with direct image upload
-- `GET /api/recipes/{id}` - Get recipe details
-- `PUT /api/recipes/{id}` - Update recipe
-- `DELETE /api/recipes/{id}` - Delete recipe
-- `POST /api/images/upload/recipe` - Upload recipe image
-- `POST /api/images/upload/{folder}` - Upload image to specific folder
-- `DELETE /api/images/{publicId}` - Delete image from Cloudinary
-- `GET /api/images/{publicId}/thumbnail` - Generate thumbnail URL
-
-### Social Features
-- `POST /api/comments` - Create comment
-- `POST /api/likes/recipe/{id}` - Toggle recipe like
-- `POST /api/likes/comment/{id}` - Toggle comment like
-- `POST /api/favorites/recipe/{id}` - Toggle favorite
-- `GET /api/favorites` - Get user's favorites
-- `POST /api/reviews` - Create review
-
-### Notifications
-- `GET /api/notifications` - Get notifications (paginated)
-- `GET /api/notifications/unread-count` - Get unread count
-- `PUT /api/notifications/{id}/read` - Mark as read
-- `PUT /api/notifications/mark-all-read` - Mark all as read
-
-### Consumer Warnings (Public)
-- `GET /api/consumer-warnings` - Get all consumer warnings
-- `GET /api/consumer-warnings/{id}` - Get consumer warning by ID
-
-### Recipe Search ("Recipes I Can Make")
-- `GET /api/recipe-search/ingredients` - Search/get all available ingredients
-- `POST /api/recipe-search/recipes` - Find recipes by available ingredients
-- `POST /api/recipe-search/recipes/{id}/match` - Calculate match for specific recipe
-- `POST /api/recipe-search/recipes/{id}/missing-ingredients` - Get missing ingredients
-- `GET /api/recipe-search/example` - Get example search request
-
-### Admin Management (Admin Only)
-- `GET /api/admin/categories` - Get categories (paginated)
-- `POST /api/admin/categories` - Create category
-- `PUT /api/admin/categories/{id}` - Update category
-- `DELETE /api/admin/categories/{id}` - Delete category
-- `GET /api/admin/consumer-warnings` - Get warnings (paginated)
-- `POST /api/admin/consumer-warnings` - Create warning
-- `PUT /api/admin/consumer-warnings/{id}` - Update warning
-- `DELETE /api/admin/consumer-warnings/{id}` - Delete warning
-- `GET /api/admin/users` - Get users (paginated)
-- `GET /api/admin/users/search` - Search users
-- `GET /api/admin/users/status/{active}` - Filter by status
-- `GET /api/admin/users/role/{role}` - Filter by role
-- `PUT /api/admin/users/{id}/status` - Update user status
-- `PUT /api/admin/users/{id}/roles` - Update user roles
-- `DELETE /api/admin/users/{id}` - Delete user
-- `GET /api/admin/users/{id}/activity` - Get user activity stats
-
 ## 🧪 Testing
 
 Run the test suite:
@@ -239,6 +405,8 @@ Run specific test classes:
 ./gradlew test --tests "*LikeServiceTest*"
 ./gradlew test --tests "*AvatarManagementTest*"
 ```
+
+
 
 ## 📸 Image Upload Examples
 
@@ -270,80 +438,9 @@ curl -X POST \
   http://localhost:8080/api/recipes/with-images
 ```
 
-## �️ Admin Management Examples
 
-### Create Category
-```bash
-curl -X POST \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Mediterranean", "description": "Mediterranean cuisine recipes"}' \
-  http://localhost:8080/api/admin/categories
-```
 
-### Create Consumer Warning
-```bash
-curl -X POST \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Contains Sesame", "description": "This product contains sesame seeds"}' \
-  http://localhost:8080/api/admin/consumer-warnings
-```
 
-### Search Users
-```bash
-curl -X GET \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
-  "http://localhost:8080/api/admin/users/search?query=john&page=0&size=10"
-```
-
-### Promote User to Admin
-```bash
-curl -X PUT \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"roles": ["ROLE_USER", "ROLE_ADMIN"]}' \
-  http://localhost:8080/api/admin/users/1/roles
-```
-
-### Deactivate User
-```bash
-curl -X PUT \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"active": false}' \
-  http://localhost:8080/api/admin/users/1/status
-```
-
-## 🔍 "Recipes I Can Make" Examples
-
-### Search Available Ingredients
-```bash
-curl -X GET \
-  "http://localhost:8080/api/recipe-search/ingredients?query=chicken"
-```
-
-### Find Recipes by Ingredients
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "availableIngredients": ["chicken", "rice", "onion", "garlic"],
-    "minMatchPercentage": 70.0,
-    "exactMatchOnly": false,
-    "sortBy": "matchPercentage",
-    "sortDirection": "desc"
-  }' \
-  "http://localhost:8080/api/recipe-search/recipes?page=0&size=10"
-```
-
-### Check Recipe Match
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '["chicken", "rice", "onion"]' \
-  http://localhost:8080/api/recipe-search/recipes/1/match
-```
 
 ## �🚧 Development
 
@@ -386,3 +483,157 @@ curl -X POST \
 - Avatar upload, change, and delete functionality
 - Streamlined user profile management
 - User warning assignment for recipes
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**1. Database Connection Failed**
+```
+Error: Could not connect to MySQL server
+```
+**Solution:**
+- Ensure MySQL is running: `sudo systemctl start mysql` (Linux) or start MySQL service (Windows)
+- Check database credentials in `application.properties`
+- Verify database exists: `SHOW DATABASES;` in MySQL
+
+**2. Port Already in Use**
+```
+Error: Port 8080 is already in use
+```
+**Solution:**
+- Kill process using port 8080: `lsof -ti:8080 | xargs kill -9` (Mac/Linux)
+- Or change port in `application.properties`: `server.port=8081`
+
+**3. JWT Token Invalid**
+```
+Error: 401 Unauthorized
+```
+**Solution:**
+- Check JWT secret configuration
+- Ensure token is included in Authorization header: `Bearer <token>`
+- Verify token hasn't expired (default: 24 hours)
+
+**4. Cloudinary Upload Failed**
+```
+Error: Image upload failed
+```
+**Solution:**
+- Verify Cloudinary credentials in `application.properties`
+- Check internet connection
+- Ensure image file size is under 10MB
+
+**5. Build Failed**
+```
+Error: Could not resolve dependencies
+```
+**Solution:**
+- Check internet connection
+- Clear Gradle cache: `./gradlew clean`
+- Refresh dependencies: `./gradlew build --refresh-dependencies`
+
+### Logs and Debugging
+
+**Enable Debug Logging:**
+Add to `application.properties`:
+```properties
+logging.level.com.javarecipe=DEBUG
+logging.level.org.springframework.security=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+```
+
+**View Application Logs:**
+```bash
+# Real-time logs
+./gradlew bootRun
+
+# Or check log files (if configured)
+tail -f logs/application.log
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+### Development Workflow
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**
+4. **Run tests**
+   ```bash
+   ./gradlew test
+   ```
+5. **Commit your changes**
+   ```bash
+   git commit -m "Add: your feature description"
+   ```
+6. **Push to your fork**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+7. **Create a Pull Request**
+
+### Code Style Guidelines
+
+- Follow Java naming conventions
+- Use meaningful variable and method names
+- Add JavaDoc comments for public methods
+- Write unit tests for new functionality
+- Keep methods small and focused (max 20 lines)
+
+### Testing Requirements
+
+- All new features must include unit tests
+- Maintain test coverage above 80%
+- Integration tests for API endpoints
+- Mock external dependencies (Cloudinary, etc.)
+
+### Commit Message Format
+
+```
+Type: Brief description
+
+Detailed explanation if needed
+
+- Add specific changes
+- Fix specific issues
+- Update specific components
+```
+
+Types: `Add`, `Fix`, `Update`, `Remove`, `Refactor`, `Test`, `Docs`
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📖 Additional Documentation
+
+- **Complete API Reference**: See `api.txt` file for comprehensive API documentation with detailed request/response examples
+- **Database Schema**: Auto-generated via JPA/Hibernate - check entity classes for structure
+- **Security Configuration**: JWT-based authentication with role-based authorization
+- **Image Management**: Cloudinary integration with automatic optimization and CDN delivery
+
+## 🆘 Support
+
+- **Documentation**: Check this README and the `api.txt` file for comprehensive API documentation
+- **Issues**: Report bugs and request features via GitHub Issues
+- **Discussions**: Join discussions in GitHub Discussions
+- **Testing**: All 50+ endpoints have been thoroughly tested and verified working
+- **Email**: Contact the maintainers for additional support
+
+## 🙏 Acknowledgments
+
+- Spring Boot team for the excellent framework
+- Cloudinary for image management services
+- MySQL for reliable database services
+- All contributors who helped build this project
+
+---
+
+**Happy Coding! 🚀**
+
+Built with ❤️ using Spring Boot, MySQL, and modern Java practices.

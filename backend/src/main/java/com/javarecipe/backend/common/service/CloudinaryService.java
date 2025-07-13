@@ -42,11 +42,7 @@ public class CloudinaryService {
                 "folder", folder,
                 "public_id", uniqueFilename,
                 "resource_type", "image",
-                "format", fileExtension,
-                "transformation", ObjectUtils.asMap(
-                        "quality", "auto:good",
-                        "fetch_format", "auto"
-                )
+                "format", fileExtension
         );
 
         // Upload to Cloudinary
@@ -75,18 +71,14 @@ public class CloudinaryService {
         // Generate unique filename
         String uniqueFilename = "recipe_" + UUID.randomUUID().toString();
 
-        // Upload parameters with recipe-specific transformations
+        // Upload parameters with recipe-specific transformations (like Node.js)
         Map<String, Object> uploadParams = ObjectUtils.asMap(
                 "folder", "recipes",
                 "public_id", uniqueFilename,
-                "resource_type", "image",
-                "transformation", ObjectUtils.asMap(
-                        "width", 800,
-                        "height", 600,
-                        "crop", "fill",
-                        "quality", "auto:good",
-                        "fetch_format", "auto"
-                )
+                "resource_type", "auto",
+                "width", 800,
+                "height", 600,
+                "crop", "fill"
         );
 
         // Upload to Cloudinary
@@ -115,19 +107,14 @@ public class CloudinaryService {
         // Generate unique filename
         String uniqueFilename = "avatar_" + UUID.randomUUID().toString();
 
-        // Upload parameters with avatar-specific transformations
+        // Upload parameters with avatar-specific transformations (like Node.js)
         Map<String, Object> uploadParams = ObjectUtils.asMap(
                 "folder", "avatars",
                 "public_id", uniqueFilename,
-                "resource_type", "image",
-                "transformation", ObjectUtils.asMap(
-                        "width", 200,
-                        "height", 200,
-                        "crop", "fill",
-                        "gravity", "face",
-                        "quality", "auto:good",
-                        "fetch_format", "auto"
-                )
+                "resource_type", "auto",
+                "width", 150,
+                "height", 150,
+                "crop", "fill"
         );
 
         // Upload to Cloudinary

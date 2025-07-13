@@ -4,6 +4,7 @@ import com.javarecipe.backend.recipe.dto.RecipeRequest;
 import com.javarecipe.backend.recipe.entity.*;
 import com.javarecipe.backend.recipe.repository.*;
 import com.javarecipe.backend.user.entity.User;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final IngredientRepository ingredientRepository;
     private final InstructionRepository instructionRepository;
     private final RecipeImageRepository recipeImageRepository;
+    private final EntityManager entityManager;
 
     @Autowired
     public RecipeServiceImpl(
@@ -33,13 +35,15 @@ public class RecipeServiceImpl implements RecipeService {
             ConsumerWarningRepository consumerWarningRepository,
             IngredientRepository ingredientRepository,
             InstructionRepository instructionRepository,
-            RecipeImageRepository recipeImageRepository) {
+            RecipeImageRepository recipeImageRepository,
+            EntityManager entityManager) {
         this.recipeRepository = recipeRepository;
         this.categoryRepository = categoryRepository;
         this.consumerWarningRepository = consumerWarningRepository;
         this.ingredientRepository = ingredientRepository;
         this.instructionRepository = instructionRepository;
         this.recipeImageRepository = recipeImageRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -142,7 +146,18 @@ public class RecipeServiceImpl implements RecipeService {
                 recipeImageRepository.save(image);
             }
         }
-        
+
+        // Use EntityManager to refresh and fetch all relationships
+        entityManager.refresh(savedRecipe);
+        entityManager.flush();
+
+        // Manually load all relationships to ensure they're available for JSON serialization
+        savedRecipe.getIngredients().size();
+        savedRecipe.getInstructions().size();
+        savedRecipe.getCategories().size();
+        savedRecipe.getConsumerWarnings().size();
+        savedRecipe.getImages().size();
+
         return savedRecipe;
     }
 
@@ -282,7 +297,22 @@ public class RecipeServiceImpl implements RecipeService {
     public Recipe setRecipePublishedStatus(Long id, boolean publish) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Recipe not found with id: " + id));
-        
+
+        recipe.setPublished(publish);
+        return recipeRepository.save(recipe);
+    }
+
+    @Override
+    @Transactional
+    public Recipe setUserRecipePublishedStatus(Long id, boolean publish, User user) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Recipe not found with id: " + id));
+
+        // Check if user is authorized to modify this recipe
+        if (!isUserAuthorized(recipe, user)) {
+            throw new AccessDeniedException("You are not authorized to modify this recipe");
+        }
+
         recipe.setPublished(publish);
         return recipeRepository.save(recipe);
     }
